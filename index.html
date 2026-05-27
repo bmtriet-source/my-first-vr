@@ -3,140 +3,160 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chấm Điểm Phát Âm Anh-Mỹ (GitHub Pages)</title>
-    <script src="https://aka.ms/csspeech/jsbrowserpackage"></script>
+    <title>Chấm Điểm Phát Âm Giọng Mỹ - Google Core</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 50px auto; text-align: center; background: #f0f4f8; color: #333; }
-        .container { background: white; padding: 40px 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
-        .config-box { background: #fff3cd; border: 1px solid #ffeeba; padding: 15px; border-radius: 8px; margin-bottom: 25px; text-align: left; font-size: 14px; }
-        .config-box input { width: 95%; padding: 8px; margin: 5px 0 10px 0; border: 1px solid #ccc; border-radius: 4px; }
-        .sentence { font-size: 26px; font-weight: bold; color: #2c3e50; margin: 25px 0; line-height: 1.4; }
-        button { font-size: 16px; font-weight: bold; padding: 14px 28px; margin: 10px; border: none; border-radius: 25px; cursor: pointer; transition: 0.3s; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        .btn-start { background: #2ecc71; color: white; }
-        .btn-start:hover { background: #27ae60; }
-        .btn-stop { background: #e74c3c; color: white; }
-        .btn-stop:hover { background: #c0392b; }
-        button:disabled { background: #bdc3c7; cursor: not-allowed; box-shadow: none; }
-        .status-text { margin-top: 15px; font-style: italic; color: #7f8c8d; min-height: 20px; }
-        .result-box { margin-top: 35px; text-align: left; display: none; background: #f9f9f9; padding: 20px; border-radius: 8px; border-left: 6px solid #3498db; }
-        .score { font-size: 18px; margin: 8px 0; display: flex; justify-content: space-between; border-bottom: 1px dashed #eee; padding-bottom: 5px; }
-        .high { color: #2ecc71; font-weight: bold; font-size: 22px; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 50px auto; text-align: center; background: #eef2f3; color: #333; }
+        .container { background: white; padding: 40px 30px; border-radius: 12px; box-shadow: 0 5px 25px rgba(0,0,0,0.05); }
+        .sentence { font-size: 26px; font-weight: bold; color: #2c3e50; margin: 25px 0; line-height: 1.4; background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px dashed #cbd5e1; }
+        button { font-size: 16px; font-weight: bold; padding: 14px 28px; margin: 10px; border: none; border-radius: 25px; cursor: pointer; transition: 0.2s; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .btn-start { background: #4285F4; color: white; } /* Google Blue */
+        .btn-start:hover { background: #357ae8; }
+        .btn-stop { background: #ea4335; color: white; } /* Google Red */
+        .btn-stop:hover { background: #d93025; }
+        button:disabled { background: #cbd5e1; cursor: not-allowed; box-shadow: none; color: #94a3b8; }
+        .status-text { margin-top: 15px; font-style: italic; color: #64748b; min-height: 20px; }
+        
+        .result-box { margin-top: 35px; text-align: left; display: none; background: #f1f5f9; padding: 20px; border-radius: 8px; border-left: 6px solid #4285F4; }
+        .score-circle { width: 100px; height: 100px; border-radius: 50%; background: #4285F4; color: white; font-size: 32px; font-weight: bold; display: flex; align-items: center; justify-content: center; margin: 15px auto; box-shadow: 0 4px 10px rgba(66, 133, 244, 0.3); }
+        .text-compare { margin-top: 15px; font-size: 15px; line-height: 1.6; }
+        .text-compare span { font-weight: bold; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>Luyện Phát Âm Giọng Mỹ (US)</h2>
+    <h2>Luyện Phát Âm Anh-Mỹ (Google Web Speech)</h2>
+    <p>Hãy nhấn nút ghi âm và đọc to câu tiếng Anh sau:</p>
     
-    <div class="config-box">
-        <strong>⚙️ Cấu hình Azure Speech Service:</strong><br>
-        <label for="azure-key">Speech Key:</label>
-        <input type="password" id="azure-key" placeholder="Nhập Azure Speech Key của bạn...">
-        <label for="azure-region">Region:</label>
-        <input type="text" id="azure-region" placeholder="Ví dụ: eastus, southeastasia...">
-        <small style="color: #666;">* Lưu ý: Key này được xử lý trực tiếp dưới trình duyệt của bạn, không bị lưu trữ ở bất kỳ đâu.</small>
-    </div>
-
-    <p>Hãy bấm nút ghi âm và đọc to câu sau:</p>
-    <div class="sentence" id="ref-text">Good morning! It is a pleasure to meet you today.</div>
+    <div class="sentence" id="ref-text">I love learning English with artificial intelligence.</div>
 
     <button id="btn-start" class="btn-start">🎤 Bắt đầu nói</button>
     <button id="btn-stop" class="btn-stop" disabled>🛑 Dừng & Chấm điểm</button>
 
-    <div id="status" class="status-text">Sẵn sàng.</div>
+    <div id="status" class="status-text">Sẵn sàng nhận diện.</div>
 
     <div class="result-box" id="result-box">
-        <h3>📊 Kết quả phân tích AI:</h3>
-        <div class="score">Điểm phát âm tổng quan: <span id="score-total" class="high">0</span></div>
-        <div class="score">Độ chính xác phát âm (Accuracy): <span id="score-acc">0</span> / 100</div>
-        <div class="score">Độ lưu loát (Fluency): <span id="score-flu">0</span> / 100</div>
-        <div class="score">Độ đầy đủ của câu (Completeness): <span id="score-comp">0</span> / 100</div>
+        <h3 style="text-align: center; margin-top:0;">📊 Kết quả điểm số</h3>
+        <div class="score-circle" id="score-total">0%</div>
+        
+        <div class="text-compare">
+            📌 <b>Câu gốc:</b> <span style="color: #475569;" id="txt-original"></span><br>
+            🗣️ <b>Máy nghe được:</b> <span style="color: #0284c7;" id="txt-recognized"></span>
+        </div>
     </div>
 </div>
 
 <script>
-    let recognizer;
+    // Kiểm tra xem trình duyệt có hỗ trợ Web Speech API không (Hỗ trợ tốt nhất trên Chrome, Edge, Safari)
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    
+    if (!SpeechRecognition) {
+        alert("Trình duyệt của bạn không hỗ trợ nhận diện giọng nói. Vui lòng dùng Google Chrome hoặc Microsoft Edge!");
+    }
+
+    const recognition = new SpeechRecognition();
+    // Cấu hình ngôn ngữ chuẩn Anh - Mỹ (en-US)
+    recognition.lang = 'en-US'; 
+    recognition.interimResults = false; // Chỉ lấy kết quả cuối cùng khi nói xong
+    recognition.maxAlternatives = 1;
+
     const btnStart = document.getElementById('btn-start');
     const btnStop = document.getElementById('btn-stop');
     const statusText = document.getElementById('status');
+    const refText = document.getElementById('ref-text').innerText;
 
     btnStart.onclick = () => {
-        const key = document.getElementById('azure-key').value.trim();
-        const region = document.getElementById('azure-region').value.trim();
-        const referenceText = document.getElementById('ref-text').innerText;
-
-        if (!key || !region) {
-            alert("Vui lòng điền đầy đủ Speech Key và Region của Azure trước khi thực hiện!");
-            return;
+        try {
+            recognition.start();
+            statusText.innerText = "⏳ Hệ thống đang nghe... Hãy đọc câu trên!";
+            btnStart.disabled = true;
+            btnStop.disabled = false;
+            document.getElementById('result-box').style.display = 'none';
+        } catch (e) {
+            console.error(e);
         }
-
-        // 1. Cấu hình SDK Azure Speech
-        const speechConfig = SpeechSDK.SpeechConfig.fromSubscription(key, region);
-        const audioConfig = SpeechSDK.AudioConfig.fromDefaultMicrophoneInput();
-
-        // Thiết lập tính năng Chấm điểm phát âm (Pronunciation Assessment)
-        const pronunciationAssessmentConfig = new SpeechSDK.PronunciationAssessmentConfig(
-            referenceText,
-            SpeechSDK.PronunciationAssessmentGradingSystem.HundredMark,
-            SpeechSDK.PronunciationAssessmentGranularity.Phoneme,
-            true
-        );
-
-        // 2. Khởi tạo bộ nhận diện giọng nói (Mặc định ngôn ngữ en-US)
-        recognizer = new SpeechSDK.SpeechRecognizer(speechConfig, "en-US", audioConfig);
-        pronunciationAssessmentConfig.applyTo(recognizer);
-
-        // 3. Trạng thái giao diện khi bắt đầu
-        statusText.innerText = "⏳ Đang lắng nghe... Hãy nói ngay bây giờ!";
-        btnStart.disabled = true;
-        btnStop.disabled = false;
-
-        // 4. Bắt đầu nhận diện từ Microphone
-        recognizer.recognizeOnceAsync(
-            result => {
-                // Nhận kết quả từ Azure trả về
-                const pronunciationResult = SpeechSDK.PronunciationAssessmentResult.fromResult(result);
-                
-                if (result.reason === SpeechSDK.ResultReason.RecognizedSpeech) {
-                    statusText.innerText = "✅ Đã phân tích xong!";
-                    
-                    // Hiển thị điểm số lên giao diện
-                    document.getElementById('result-box').style.display = 'block';
-                    document.getElementById('score-total').innerText = Math.round(pronunciationResult.pronunciationScore);
-                    document.getElementById('score-acc').innerText = Math.round(pronunciationResult.accuracyScore);
-                    document.getElementById('score-flu').innerText = Math.round(pronunciationResult.fluencyScore);
-                    document.getElementById('score-comp').innerText = Math.round(pronunciationResult.completenessScore);
-                } else {
-                    statusText.innerText = "❌ Không nhận diện được giọng nói hoặc Key sai. Vui lòng thử lại.";
-                }
-
-                resetButtons();
-                recognizer.close();
-            },
-            err => {
-                statusText.innerText = "❌ Có lỗi xảy ra trong quá trình kết nối API.";
-                console.error(err);
-                resetButtons();
-            }
-        );
     };
 
     btnStop.onclick = () => {
-        if (recognizer) {
-            statusText.innerText = "⏳ Đang tính toán điểm số...";
-            // Buộc dừng nhận diện sớm và trả kết quả luôn
-            recognizer.stopContinuousRecognitionAsync(() => {
-                resetButtons();
-            });
+        recognition.stop();
+        statusText.innerText = "⏳ Đang tính toán điểm số...";
+        btnStart.disabled = false;
+        btnStop.disabled = true;
+    };
+
+    // Khi người dùng dừng nói hoặc hệ thống nhận diện xong
+    recognition.onresult = (event) => {
+        const resultText = event.results[0][0].transcript; // Đoạn text Google nhận diện được
+        const confidence = event.results[0][0].confidence; // Độ tự tin của Google (từ 0 đến 1)
+
+        // Tính toán điểm số dựa trên thuật toán Levenshtein (so sánh độ giống nhau của 2 chuỗi text)
+        const similarityScore = calculateSimilarity(refText, resultText);
+        
+        // Kết hợp điểm giống nhau của chữ + độ rõ ràng của âm thanh (Confidence) để ra điểm cuối
+        let finalScore = Math.round((similarityScore * 0.7) + (confidence * 100 * 0.3));
+        if (finalScore > 100) finalScore = 100;
+
+        // Hiển thị kết quả lên màn hình
+        document.getElementById('result-box').style.display = 'block';
+        document.getElementById('score-total').innerText = finalScore + "%";
+        document.getElementById('txt-original').innerText = refText;
+        document.getElementById('txt-recognized').innerText = resultText;
+        
+        statusText.innerText = "✅ Đã chấm điểm xong!";
+        btnStart.disabled = false;
+        btnStop.disabled = true;
+    };
+
+    recognition.onerror = (event) => {
+        statusText.innerText = "❌ Không nghe rõ hoặc bị lỗi: " + event.error;
+        btnStart.disabled = false;
+        btnStop.disabled = true;
+    };
+
+    recognition.onend = () => {
+        if (btnStart.disabled) { 
+            statusText.innerText = "Hệ thống dừng nghe.";
+            btnStart.disabled = false;
+            btnStop.disabled = true;
         }
     };
 
-    function resetButtons() {
-        btnStart.disabled = false;
-        btnStop.disabled = true;
+    // Hàm thuật toán tính toán % giống nhau giữa 2 chuỗi văn bản
+    function calculateSimilarity(str1, str2) {
+        const s1 = str1.toLowerCase().replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,"").trim();
+        const s2 = str2.toLowerCase().replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,"").trim();
+        
+        if (s1 === s2) return 100;
+        if (s1.length === 0 || s2.length === 0) return 0;
+
+        const editDistance = levenshteinDistance(s1, s2);
+        const longestLength = Math.max(s1.length, s2.length);
+        
+        return ((longestLength - editDistance) / longestLength) * 100;
+    }
+
+    // Thuật toán Levenshtein Distance
+    function levenshteinDistance(a, b) {
+        const matrix = [];
+        for (let i = 0; i <= b.length; i++) matrix[i] = [i];
+        for (let j = 0; j <= a.length; j++) matrix[0][j] = j;
+
+        for (let i = 1; i <= b.length; i++) {
+            for (let j = 1; j <= a.length; j++) {
+                if (b.charAt(i - 1) === a.charAt(j - 1)) {
+                    matrix[i][j] = matrix[i - 1][j - 1];
+                } else {
+                    matrix[i][j] = Math.min(
+                        matrix[i - 1][j - 1] + 1, // thay thế
+                        matrix[i][j - 1] + 1,     // chèn
+                        matrix[i - 1][j] + 1      // xóa
+                    );
+                }
+            }
+        }
+        return matrix[b.length][a.length];
     }
 </script>
 
 </body>
 </html>
-
