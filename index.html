@@ -1,1 +1,142 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chấm Điểm Phát Âm Anh-Mỹ (GitHub Pages)</title>
+    <script src="https://aka.ms/csspeech/jsbrowserpackage"></script>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 50px auto; text-align: center; background: #f0f4f8; color: #333; }
+        .container { background: white; padding: 40px 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+        .config-box { background: #fff3cd; border: 1px solid #ffeeba; padding: 15px; border-radius: 8px; margin-bottom: 25px; text-align: left; font-size: 14px; }
+        .config-box input { width: 95%; padding: 8px; margin: 5px 0 10px 0; border: 1px solid #ccc; border-radius: 4px; }
+        .sentence { font-size: 26px; font-weight: bold; color: #2c3e50; margin: 25px 0; line-height: 1.4; }
+        button { font-size: 16px; font-weight: bold; padding: 14px 28px; margin: 10px; border: none; border-radius: 25px; cursor: pointer; transition: 0.3s; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .btn-start { background: #2ecc71; color: white; }
+        .btn-start:hover { background: #27ae60; }
+        .btn-stop { background: #e74c3c; color: white; }
+        .btn-stop:hover { background: #c0392b; }
+        button:disabled { background: #bdc3c7; cursor: not-allowed; box-shadow: none; }
+        .status-text { margin-top: 15px; font-style: italic; color: #7f8c8d; min-height: 20px; }
+        .result-box { margin-top: 35px; text-align: left; display: none; background: #f9f9f9; padding: 20px; border-radius: 8px; border-left: 6px solid #3498db; }
+        .score { font-size: 18px; margin: 8px 0; display: flex; justify-content: space-between; border-bottom: 1px dashed #eee; padding-bottom: 5px; }
+        .high { color: #2ecc71; font-weight: bold; font-size: 22px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Luyện Phát Âm Giọng Mỹ (US)</h2>
+    
+    <div class="config-box">
+        <strong>⚙️ Cấu hình Azure Speech Service:</strong><br>
+        <label for="azure-key">Speech Key:</label>
+        <input type="password" id="azure-key" placeholder="Nhập Azure Speech Key của bạn...">
+        <label for="azure-region">Region:</label>
+        <input type="text" id="azure-region" placeholder="Ví dụ: eastus, southeastasia...">
+        <small style="color: #666;">* Lưu ý: Key này được xử lý trực tiếp dưới trình duyệt của bạn, không bị lưu trữ ở bất kỳ đâu.</small>
+    </div>
+
+    <p>Hãy bấm nút ghi âm và đọc to câu sau:</p>
+    <div class="sentence" id="ref-text">Good morning! It is a pleasure to meet you today.</div>
+
+    <button id="btn-start" class="btn-start">🎤 Bắt đầu nói</button>
+    <button id="btn-stop" class="btn-stop" disabled>🛑 Dừng & Chấm điểm</button>
+
+    <div id="status" class="status-text">Sẵn sàng.</div>
+
+    <div class="result-box" id="result-box">
+        <h3>📊 Kết quả phân tích AI:</h3>
+        <div class="score">Điểm phát âm tổng quan: <span id="score-total" class="high">0</span></div>
+        <div class="score">Độ chính xác phát âm (Accuracy): <span id="score-acc">0</span> / 100</div>
+        <div class="score">Độ lưu loát (Fluency): <span id="score-flu">0</span> / 100</div>
+        <div class="score">Độ đầy đủ của câu (Completeness): <span id="score-comp">0</span> / 100</div>
+    </div>
+</div>
+
+<script>
+    let recognizer;
+    const btnStart = document.getElementById('btn-start');
+    const btnStop = document.getElementById('btn-stop');
+    const statusText = document.getElementById('status');
+
+    btnStart.onclick = () => {
+        const key = document.getElementById('azure-key').value.trim();
+        const region = document.getElementById('azure-region').value.trim();
+        const referenceText = document.getElementById('ref-text').innerText;
+
+        if (!key || !region) {
+            alert("Vui lòng điền đầy đủ Speech Key và Region của Azure trước khi thực hiện!");
+            return;
+        }
+
+        // 1. Cấu hình SDK Azure Speech
+        const speechConfig = SpeechSDK.SpeechConfig.fromSubscription(key, region);
+        const audioConfig = SpeechSDK.AudioConfig.fromDefaultMicrophoneInput();
+
+        // Thiết lập tính năng Chấm điểm phát âm (Pronunciation Assessment)
+        const pronunciationAssessmentConfig = new SpeechSDK.PronunciationAssessmentConfig(
+            referenceText,
+            SpeechSDK.PronunciationAssessmentGradingSystem.HundredMark,
+            SpeechSDK.PronunciationAssessmentGranularity.Phoneme,
+            true
+        );
+
+        // 2. Khởi tạo bộ nhận diện giọng nói (Mặc định ngôn ngữ en-US)
+        recognizer = new SpeechSDK.SpeechRecognizer(speechConfig, "en-US", audioConfig);
+        pronunciationAssessmentConfig.applyTo(recognizer);
+
+        // 3. Trạng thái giao diện khi bắt đầu
+        statusText.innerText = "⏳ Đang lắng nghe... Hãy nói ngay bây giờ!";
+        btnStart.disabled = true;
+        btnStop.disabled = false;
+
+        // 4. Bắt đầu nhận diện từ Microphone
+        recognizer.recognizeOnceAsync(
+            result => {
+                // Nhận kết quả từ Azure trả về
+                const pronunciationResult = SpeechSDK.PronunciationAssessmentResult.fromResult(result);
+                
+                if (result.reason === SpeechSDK.ResultReason.RecognizedSpeech) {
+                    statusText.innerText = "✅ Đã phân tích xong!";
+                    
+                    // Hiển thị điểm số lên giao diện
+                    document.getElementById('result-box').style.display = 'block';
+                    document.getElementById('score-total').innerText = Math.round(pronunciationResult.pronunciationScore);
+                    document.getElementById('score-acc').innerText = Math.round(pronunciationResult.accuracyScore);
+                    document.getElementById('score-flu').innerText = Math.round(pronunciationResult.fluencyScore);
+                    document.getElementById('score-comp').innerText = Math.round(pronunciationResult.completenessScore);
+                } else {
+                    statusText.innerText = "❌ Không nhận diện được giọng nói hoặc Key sai. Vui lòng thử lại.";
+                }
+
+                resetButtons();
+                recognizer.close();
+            },
+            err => {
+                statusText.innerText = "❌ Có lỗi xảy ra trong quá trình kết nối API.";
+                console.error(err);
+                resetButtons();
+            }
+        );
+    };
+
+    btnStop.onclick = () => {
+        if (recognizer) {
+            statusText.innerText = "⏳ Đang tính toán điểm số...";
+            // Buộc dừng nhận diện sớm và trả kết quả luôn
+            recognizer.stopContinuousRecognitionAsync(() => {
+                resetButtons();
+            });
+        }
+    };
+
+    function resetButtons() {
+        btnStart.disabled = false;
+        btnStop.disabled = true;
+    }
+</script>
+
+</body>
+</html>
 
